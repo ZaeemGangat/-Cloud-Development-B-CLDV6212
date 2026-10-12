@@ -1,0 +1,253 @@
+{
+  "info": {
+    "_postman_id": "75dc0a41-3d2e-41d1-b520-2c70e1edac2c",
+    "name": "CoffeeNChill Part 1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "58251838",
+    "_collection_link": "https://go.postman.co/collection/58251838-75dc0a41-3d2e-41d1-b520-2c70e1edac2c?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Menu",
+      "item": [
+        {
+          "name": "Create Menu Item",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"category\": \"Hot Drinks\",\r\n  \"sku\": \"COF-001\",\r\n  \"name\": \"Espresso\",\r\n  \"description\": \"Single shot of rich espresso\",\r\n  \"price\": 25.50,\r\n  \"isAvailable\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:7018/api/menu",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "7018",
+              "path": [
+                "api",
+                "menu"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Menu Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:7018/api/menu",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "7018",
+              "path": [
+                "api",
+                "menu"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Menu Items By Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:7018/api/menu/category/Hot Drinks",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "7018",
+              "path": [
+                "api",
+                "menu",
+                "category",
+                "Hot Drinks"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Menu Item",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"price\": 28.00,\r\n  \"isAvailable\": false\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:7018/api/menu/Hot Drinks/COF-001",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "7018",
+              "path": [
+                "api",
+                "menu",
+                "Hot Drinks",
+                "COF-001"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Menu Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:7018/api/menu/Hot Drinks/COF-001",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "7018",
+              "path": [
+                "api",
+                "menu",
+                "Hot Drinks",
+                "COF-001"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "Upload Staff Document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "uuid": "52f274db-5eb3-4274-96bb-b132c9d22ad9",
+                  "src": [
+                    "/C:/Users/emeris/Downloads/CLDV6212-LINK UNAVAILABLE.png",
+                    "/C:/Users/emeris/Downloads/ST10339718-PROG7312-PART-1.pdf",
+                    "/C:/Users/emeris/Downloads/ST10339718-PROG7312-PART-1.docx"
+                  ]
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:7018/api/documents/upload",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "7018",
+              "path": [
+                "api",
+                "documents",
+                "upload"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Staff Documents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:7018/api/documents",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "7018",
+              "path": [
+                "api",
+                "documents"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Download Staff Document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:7018/api/documents/download/CLDV6212-LINK UNAVAILABLE.png",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "7018",
+              "path": [
+                "api",
+                "documents",
+                "download",
+                "CLDV6212-LINK UNAVAILABLE.png"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": ""
+    }
+  ]
+}
