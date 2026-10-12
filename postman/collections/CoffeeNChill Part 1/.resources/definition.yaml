@@ -1,0 +1,5 @@
+$kind: collection
+name: CoffeeNChill Part 1
+variables:
+  - key: baseUrl
+    value: 'http://localhost:7071'

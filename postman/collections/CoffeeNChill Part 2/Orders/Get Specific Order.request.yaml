@@ -1,0 +1,22 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/api/orders/2026-10-12/ORD-2026-8801'
+order: 3000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Order has status field", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property('status');
+      });
+
+      pm.test("Status transitions through lifecycle", function () {
+          var jsonData = pm.response.json();
+          var validStatuses = ['Received', 'Preparing', 'Ready', 'Collected'];
+          pm.expect(validStatuses).to.include(jsonData.status);
+      });

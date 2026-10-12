@@ -1,0 +1,11 @@
+$kind: http-request
+method: PUT
+url: '{{baseUrl}}/api/menu/Hot Drinks/COF-001'
+order: 4000
+body:
+  type: json
+  content: |-
+    {
+      "price": 28.00,
+      "isAvailable": false
+    }

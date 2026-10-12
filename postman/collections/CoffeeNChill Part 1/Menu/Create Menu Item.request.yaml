@@ -1,0 +1,15 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/api/menu'
+order: 1000
+body:
+  type: json
+  content: |-
+    {
+      "category": "Hot Drinks",
+      "sku": "COF-NEW-001",
+      "name": "New Espresso",
+      "description": "Test item",
+      "price": 25.50,
+      "isAvailable": true
+    }
