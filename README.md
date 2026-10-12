@@ -220,6 +220,3 @@ CoffeeNChill/
 
 ---
 
-## License
-
-This project is part of the Cloud Development B (CLDV6212) course assessment.
