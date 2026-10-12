@@ -153,10 +153,10 @@ When an order is submitted to the queue, it automatically transitions through:
 ## Video Demonstrations
 
 ### Part 1 Video
-[YouTube Link - Part 1] *(Add your unlisted YouTube video link here)*
+[YouTube Link - https://youtu.be/KHqFFDEhFDk 
 
 ### Part 2 Video
-[YouTube Link - Part 2] *(Add your unlisted YouTube video link here)*
+[YouTube Link - https://youtu.be/KHqFFDEhFDk 
 
 ---
 
