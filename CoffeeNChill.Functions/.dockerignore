@@ -1,0 +1,9 @@
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+azurite/
+__blobstorage__/
+__queuestorage__/
+__azurite_db*__.json

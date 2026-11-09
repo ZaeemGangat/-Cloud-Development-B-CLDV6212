@@ -1,0 +1,14 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "MenuTableName": "MenuItems",
+    "OrdersTableName": "Orders",
+    "OrderQueueName": "orderprocessingqueue",
+    "OrderProcessing__StepDelaySeconds": "2"
+  },
+  "Host": {
+    "CORS": "*"
+  }
+}
