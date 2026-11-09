@@ -1,0 +1,412 @@
+{
+  "info": {
+    "_postman_id": "c1a9f6b2-3e6f-4a4a-9a2e-2f6a4e9d1b71",
+    "name": "CoffeeNChill - Part 1 (Azure Functions, Tables, Files)",
+    "description": "End-to-end tests for the CoffeeNChill digital menu (Azure Table Storage) and staff document (Azure File Share) HTTP Azure Functions, running locally against Azurite. Run the 'Menu Items' folder top-to-bottom, then the 'Staff Documents' folder top-to-bottom (use Collection Runner for a one-click pass).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Menu Items",
+      "item": [
+        {
+          "name": "1. Create Menu Item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response contains the created item', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.sku).to.eql(pm.collectionVariables.get('sku'));",
+                  "    pm.expect(jsonData.category).to.eql(pm.collectionVariables.get('category'));",
+                  "    pm.expect(jsonData.name).to.eql('Espresso');",
+                  "    pm.expect(jsonData.isAvailable).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"{{category}}\",\n  \"sku\": \"{{sku}}\",\n  \"name\": \"Espresso\",\n  \"description\": \"Double shot espresso\",\n  \"price\": 25.50,\n  \"isAvailable\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/menu",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menu"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get All Menu Items",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array containing the created item', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    var found = jsonData.some(function (item) {",
+                  "        return item.sku === pm.collectionVariables.get('sku') && item.category === pm.collectionVariables.get('category');",
+                  "    });",
+                  "    pm.expect(found).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/menu",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menu"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Menu Items By Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Every item belongs to the requested category', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(jsonData.length).to.be.above(0);",
+                  "    jsonData.forEach(function (item) {",
+                  "        pm.expect(item.category).to.eql(pm.collectionVariables.get('category'));",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/menu/category/{{category}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menu", "category", "{{category}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Update Menu Item (price & availability)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Price and availability were updated', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.price).to.eql(27.0);",
+                  "    pm.expect(jsonData.isAvailable).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 27.00,\n  \"isAvailable\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/menu/{{category}}/{{sku}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menu", "{{category}}", "{{sku}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Update Menu Item - Unknown SKU (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404 Not Found for an unknown SKU', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 99.00\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/menu/{{category}}/DOES-NOT-EXIST",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menu", "{{category}}", "DOES-NOT-EXIST"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Delete Menu Item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204 No Content', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/menu/{{category}}/{{sku}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menu", "{{category}}", "{{sku}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. Get Menu Items By Category - After Delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Deleted item no longer appears in the category', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var found = jsonData.some(function (item) {",
+                  "        return item.sku === pm.collectionVariables.get('sku');",
+                  "    });",
+                  "    pm.expect(found).to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/menu/category/{{category}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menu", "category", "{{category}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Staff Documents",
+      "item": [
+        {
+          "name": "1. Upload Staff Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response contains the uploaded file name', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.fileName).to.be.a('string').and.not.empty;",
+                  "    // Set in both scopes: an active environment variable of the same",
+                  "    // name takes priority over a collection variable when Postman",
+                  "    // resolves {{fileName}} in a request URL, so both must be updated",
+                  "    // or the download request below would keep using a stale value.",
+                  "    pm.collectionVariables.set('fileName', jsonData.fileName);",
+                  "    pm.environment.set('fileName', jsonData.fileName);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select a sample PDF/DOCX (e.g. a barista recipe sheet) from your machine before sending."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "documents", "upload"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. List Staff Documents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Uploaded document appears in the listing', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    var found = jsonData.some(function (item) {",
+                  "        return item.fileName === pm.collectionVariables.get('fileName');",
+                  "    });",
+                  "    pm.expect(found).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "documents"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Download Staff Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has a non-empty body', function () {",
+                  "    pm.expect(pm.response.responseSize).to.be.above(0);",
+                  "});",
+                  "",
+                  "pm.test('Content-Disposition header names the file', function () {",
+                  "    pm.response.to.have.header('Content-Disposition');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/download/{{fileName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "documents", "download", "{{fileName}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Download Staff Document - Unknown File (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404 Not Found for a missing file', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/download/does-not-exist.pdf",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "documents", "download", "does-not-exist.pdf"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:7071", "type": "string" },
+    { "key": "category", "value": "Hot Drinks", "type": "string" },
+    { "key": "sku", "value": "COF-001", "type": "string" },
+    { "key": "fileName", "value": "", "type": "string" }
+  ]
+}
