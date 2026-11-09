@@ -1,0 +1,69 @@
+# ---------------------------------------------------------------------------
+# CoffeeNChill - PRODUCTION stack (Part 3). Used on the VPS.
+#
+#   cp .env.example .env      # then edit JWT_KEY and SEED_ADMIN_PASSWORD
+#   docker compose pull && docker compose up -d
+#
+# Pulls published images from Docker Hub (nothing is built on the VPS).
+# Only the gateway is published to the internet (port 5000 by default);
+# Azurite and the Functions host are reachable only on the internal network.
+# ---------------------------------------------------------------------------
+name: coffeenchill
+
+x-storage-connection: &storage-connection
+  "${STORAGE_CONNECTION_STRING:-DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;TableEndpoint=http://azurite:10002/devstoreaccount1;}"
+
+services:
+  # Azure Storage emulator: Blob (10000), Queue (10001), Table (10002).
+  # Data persists in the "azurite-data" volume across restarts/redeploys.
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    command: >
+      azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
+      --location /data --skipApiVersionCheck --loose
+    volumes:
+      - azurite-data:/data
+    restart: unless-stopped
+
+  # Part 1 + 2 Azure Functions: processes orderprocessingqueue
+  # (Received → Preparing → Ready). Internal only.
+  functions:
+    image: ${DOCKERHUB_USERNAME:-glitchysheep78}/coffeenchill-functions:${TAG:-v3.0}
+    environment:
+      AzureWebJobsStorage: *storage-connection
+      FUNCTIONS_WORKER_RUNTIME: dotnet-isolated
+      MenuTableName: MenuItems
+      OrdersTableName: Orders
+      OrderQueueName: orderprocessingqueue
+      OrderProcessing__StepDelaySeconds: ${ORDER_STEP_DELAY_SECONDS:-5}
+    depends_on:
+      - azurite
+    restart: unless-stopped
+
+  # Part 3 ASP.NET Core Web API gateway - the only public entry point.
+  gateway:
+    image: ${DOCKERHUB_USERNAME:-glitchysheep78}/coffeenchill-gateway:${TAG:-v3.0}
+    ports:
+      - "${GATEWAY_PORT:-5000}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Storage__ConnectionString: *storage-connection
+      Jwt__Key: ${JWT_KEY:?Set JWT_KEY (32+ random characters) in .env}
+      Jwt__ExpiryMinutes: ${JWT_EXPIRY_MINUTES:-60}
+      SeedAdmin__Email: ${SEED_ADMIN_EMAIL:-manager@coffeenchill.ac.za}
+      SeedAdmin__Password: ${SEED_ADMIN_PASSWORD:?Set SEED_ADMIN_PASSWORD in .env}
+      SeedAdmin__FullName: ${SEED_ADMIN_NAME:-Canteen Manager}
+      Swagger__Enabled: ${SWAGGER_ENABLED:-true}
+    depends_on:
+      - azurite
+      - functions
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /health HTTP/1.0\\r\\n\\r\\n\" >&3 && grep -q Healthy <&3'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  azurite-data:
