@@ -1,0 +1,162 @@
+# ---------------------------------------------------------------------------
+# CoffeeNChill CI/CD (Part 3 bonus)
+#
+# On every push to main:
+#   1. Checkout + set up .NET 8
+#   2. Build the solution and run the unit/integration tests
+#   3. Build both Docker images
+#   4. Push version-tagged images (3.0.<run number>, v3.0, latest) to Docker Hub
+#   5. SSH into the VPS: docker compose pull && docker compose up -d
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   DOCKERHUB_USERNAME   Docker Hub username (e.g. glitchysheep78)
+#   DOCKERHUB_TOKEN      Docker Hub access token (Account settings → Personal access tokens)
+#   VPS_HOST             VPS public IP or hostname
+#   VPS_USER             SSH user on the VPS (e.g. deploy)
+#   VPS_SSH_KEY          Private SSH key whose public key is in the VPS user's ~/.ssh/authorized_keys
+#   VPS_PORT             (optional) SSH port, default 22
+# If the VPS_* secrets are missing (e.g. after the VPS is shut down), the
+# deploy job is skipped and the pipeline still builds, tests and publishes.
+# ---------------------------------------------------------------------------
+name: Build, test & deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  DOTNET_VERSION: "8.0.x"
+  IMAGE_VERSION: 3.0.${{ github.run_number }}
+
+jobs:
+  build-and-test:
+    name: Build & test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore CoffeeNChill.sln
+
+      - name: Build
+        run: dotnet build CoffeeNChill.sln --configuration Release --no-restore
+
+      - name: Run unit tests
+        run: >
+          dotnet test CoffeeNChill.Gateway.Tests/CoffeeNChill.Gateway.Tests.csproj
+          --configuration Release --no-build
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults
+
+  docker:
+    name: Build & push images
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push gateway image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./CoffeeNChill.Gateway
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/coffeenchill-gateway:${{ env.IMAGE_VERSION }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/coffeenchill-gateway:v3.0
+            ${{ secrets.DOCKERHUB_USERNAME }}/coffeenchill-gateway:latest
+          cache-from: type=gha,scope=gateway
+          cache-to: type=gha,mode=max,scope=gateway
+
+      - name: Build & push functions image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./CoffeeNChill.Functions
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/coffeenchill-functions:${{ env.IMAGE_VERSION }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/coffeenchill-functions:v3.0
+            ${{ secrets.DOCKERHUB_USERNAME }}/coffeenchill-functions:latest
+          cache-from: type=gha,scope=functions
+          cache-to: type=gha,mode=max,scope=functions
+
+  deploy:
+    name: Deploy to VPS
+    needs: docker
+    runs-on: ubuntu-latest
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+    steps:
+      - name: Checkout code
+        if: env.VPS_HOST != ''
+        uses: actions/checkout@v4
+
+      - name: Copy docker-compose.yml to the VPS
+        if: env.VPS_HOST != ''
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: docker-compose.yml
+          target: ~/coffeenchill
+
+      - name: Pull new images and restart the stack
+        if: env.VPS_HOST != ''
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          TAG: ${{ env.IMAGE_VERSION }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          envs: TAG,DOCKERHUB_USERNAME
+          script_stop: true
+          script: |
+            cd ~/coffeenchill
+            test -f .env || { echo "Missing ~/coffeenchill/.env - create it from .env.example first"; exit 1; }
+            # Record the deployed version so manual restarts use the same images.
+            if grep -q '^TAG=' .env; then sed -i "s/^TAG=.*/TAG=${TAG}/" .env; else echo "TAG=${TAG}" >> .env; fi
+            if grep -q '^DOCKERHUB_USERNAME=' .env; then sed -i "s/^DOCKERHUB_USERNAME=.*/DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}/" .env; else echo "DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}" >> .env; fi
+            # docker compose v2 plugin (fall back to legacy docker-compose binary)
+            if docker compose version >/dev/null 2>&1; then DC="docker compose"; else DC="docker-compose"; fi
+            $DC pull && $DC up -d --remove-orphans
+            docker image prune -f
+            sleep 10
+            $DC ps
+            PORT=$(grep -oP '^GATEWAY_PORT=\K[0-9]+' .env || true)
+            curl -fsS "http://localhost:${PORT:-5000}/health"
+
+      - name: Skipped (no VPS configured)
+        if: env.VPS_HOST == ''
+        run: echo "VPS_HOST secret not set - images were published but no deployment was made."
