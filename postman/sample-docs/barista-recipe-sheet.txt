@@ -1,0 +1,8 @@
+CoffeeNChill - Barista Recipe Sheet (staff only)
+
+Espresso (COF-001)      18g in / 36g out / 25-30s
+Cappuccino              Double shot + 150ml microfoam
+Flat White              Double shot + 120ml velvet milk
+Hot Chocolate           30g cocoa blend + 200ml steamed milk
+
+Clean the steam wand after every drink. Backflush the group heads at close.
