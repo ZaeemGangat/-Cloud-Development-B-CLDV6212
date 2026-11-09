@@ -1,0 +1,32 @@
+## .NET / Azure Functions
+bin/
+obj/
+out/
+TestResults/
+*.user
+# local.settings.json is intentionally committed for this assignment:
+# it only contains the Azurite dev-storage connection string (no real secrets).
+azurite/
+__blobstorage__/
+__queuestorage__/
+__azurite_db*__.json
+
+## Secrets - the VPS .env holds the JWT key and admin password
+.env
+
+## OS / Editor
+.vs/
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+## Postman
+newman/
+
+## Docker
+*.log
+
+## Local build helper output
+build-log.txt
+docker-log.txt
