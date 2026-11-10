@@ -5,8 +5,10 @@ A cloud-enabled microservices system for the CoffeeNChill campus canteen, built 
 gateway** secured with **JWT**, **Docker**, and deployed to a **Linux VPS**.
 
 > ### 🔗 Live deployment (Part 3)
-> **Swagger UI:** `http://<VPS-IP>:5000/swagger`  ← *replace with your VPS URL before submitting*
-> **Health:** `http://<VPS-IP>:5000/health`
+> **Swagger UI:** http://20.216.12.104:5000/swagger
+> **Health:** http://20.216.12.104:5000/health
+>
+> Hosted on an Azure Linux VM (Ubuntu 24.04, Standard_B2ats_v2, UAE North) running `docker compose` with the images from Docker Hub.
 >
 > Public access may be disabled after the video recording, for security.
 
@@ -265,7 +267,7 @@ With Newman:
 
 ```bash
 npx newman run postman/CoffeeNChill-Part3.postman_collection.json \
-  --env-var baseUrl=http://<vps-ip>:5000 --env-var adminPassword='<seed admin password>' \
+  --env-var baseUrl=http://20.216.12.104:5000 --env-var adminPassword='<seed admin password>' \
   --working-dir postman
 ```
 
