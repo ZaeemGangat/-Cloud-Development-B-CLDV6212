@@ -16,9 +16,7 @@ gateway** secured with **JWT**, **Docker**, and deployed to a **Linux VPS**.
 
 | Part | YouTube |
 |---|---|
-| Part 1 | https://youtu.be/KHqFFDEhFDk |
-| Part 2 | https://youtu.be/KHqFFDEhFDk ← *check: same link as Part 1* |
-| Part 3 | *add your Part 3 video link here* |
+| Part 3 | (https://youtu.be/lC1mYRZ3uts) |
 
 ---
 
